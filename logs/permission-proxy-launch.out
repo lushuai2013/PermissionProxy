@@ -1,0 +1,6 @@
+2016-05-10 10:55:38.877:INFO:oejs.Server:jetty-8.1.19.v20160209
+2016-05-10 10:55:39.146:INFO:PermissionProxy:Initializing Spring FrameworkServlet 'REST'
+2016-05-10 10:55:39.942:INFO:oejs.AbstractConnector:Started SelectChannelConnector@0.0.0.0:8383
+2016-05-10 10:56:51.165:INFO:PermissionProxy:Destroying Spring FrameworkServlet 'REST'
+2016-05-10 10:56:51.171:INFO:oejsl.ELContextCleaner:Not cleaning cached beans: no such field javax.el.BeanELResolver.properties
+2016-05-10 10:56:51.171:INFO:oejsh.ContextHandler:stopped {name:Spring Web MVC Hello World Application, contextPath:/PermissionProxy, resourceBase:file:/Users/zephyrguo/data/project/Permission-Proxy/conf/}
