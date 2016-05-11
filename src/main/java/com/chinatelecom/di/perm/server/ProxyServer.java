@@ -93,10 +93,10 @@ public class ProxyServer extends Thread implements Service, HdfsProxyService {
     List<ShellResult> shellRess = hdfsUserMgr.findUser(user);
 
     // TODO
-    // We need to deal with inconsistent results。
+    // We need to deal with inconsistent results
     for (ShellResult res : shellRess) {
       if (res.getExitCode() != ShellResult.SUCCESS_CODE) {
-        throw new IOException("Shell has done with an exceptional exit code, ShellResult=" + res);
+        throw new IOException("An exceptional exit code, ShellResult=" + res);
       }
       return res.getStdOut().split(" ");
     }
@@ -111,10 +111,10 @@ public class ProxyServer extends Thread implements Service, HdfsProxyService {
     List<ShellResult> shellRess = hdfsUserMgr.addGroup(user, groups);
     boolean success = true;
     // TODO
-    // We need to deal with inconsistent results。
+    // We need to deal with inconsistent results
     for (ShellResult res : shellRess) {
       if (res.getExitCode() != ShellResult.SUCCESS_CODE) {
-        throw new IOException("Shell finished with an exceptional exit code, ShellResult=" + res);
+        throw new IOException("An exceptional exit code, ShellResult=" + res);
       }
       success &= (res.getExitCode() == 0);
     }
@@ -128,10 +128,10 @@ public class ProxyServer extends Thread implements Service, HdfsProxyService {
     List<ShellResult> shellRess = hdfsUserMgr.addUser(user);
     boolean success = true;
     // TODO
-    // We need to deal with inconsistent results。
+    // We need to deal with inconsistent results
     for (ShellResult res : shellRess) {
       if (res.getExitCode() != ShellResult.SUCCESS_CODE) {
-        throw new IOException("Shell finished with an exceptional exit code, ShellResult=" + res);
+        throw new IOException("An exceptional exit code, ShellResult=" + res);
       }
       success &= (res.getExitCode() == 0);
     }

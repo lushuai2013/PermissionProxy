@@ -2,6 +2,9 @@ package com.chinatelecom.di.perm.linux;
 
 import java.io.IOException;
 import java.util.Scanner;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -29,24 +32,34 @@ public class ShellUtils {
       retVal = new ShellResult(ExceptionCode.IOERROR.val(), "", errOut);
     }
 
-    LOG.info("Run command '" + cmd + "', ShellResult=" + retVal);
+    LOG.info("Command '" + cmd + "' has finished, ShellResult=" + retVal);
 
     return retVal;
   }
 
   private static ShellResult exec(String cmd) throws IOException {
+    LOG.debug("Start to execute '" + cmd + "'");
     Process shell = Runtime.getRuntime().exec(cmd);
+    ProcessMonitor monitor = ProcessMonitor.get();
+    monitor.monitor(cmd, shell, 10 * 1000);
+    boolean isTimeout;
     try {
-      LOG.debug("Start to execute '" + cmd + "'");
       shell.waitFor();
       LOG.debug("Finish execution '" + cmd + "'");
+      isTimeout = monitor.isTimeout();
     } catch (InterruptedException e) {
       LOG.warn("Wait for the shell command '" + cmd
           + "' to complete, but this thread be interrupted.");
       return new ShellResult(ExceptionCode.INTERRUPTED.val(), "", e.getClass().getCanonicalName());
+    } finally {
+      ProcessMonitor.put(monitor);
     }
 
     int exitCode = shell.exitValue();
+
+    if (isTimeout && exitCode !=0) {
+      return new ShellResult(ExceptionCode.TIMEOUT.val(), "", "Timeout when ran command " + cmd);
+    }
 
     Scanner scan = new Scanner(shell.getInputStream(), "UTF-8");
     scan.useDelimiter("\\A");
@@ -67,8 +80,75 @@ public class ShellUtils {
     return new ShellResult(exitCode, stdOut, errOut);
   }
 
+  private static class ProcessMonitor implements Runnable {
+
+    private Process process;
+    private long timeout;  //Milliseconds
+    private String cmd;
+    private boolean killed;
+
+    private static final int limit = 10;
+    private static final LinkedBlockingQueue<ProcessMonitor> boundedPool =
+        new LinkedBlockingQueue<ProcessMonitor>(limit);
+    private static final Executor executor = Executors.newCachedThreadPool();
+
+    private ProcessMonitor() {
+    }
+
+    public static ProcessMonitor get() {
+      ProcessMonitor monitor = boundedPool.poll();
+      if (monitor == null) {
+        monitor = new ProcessMonitor();
+      }
+      return monitor;
+    }
+
+    public static void put(ProcessMonitor monitor) {
+      if (monitor == null) return;
+      monitor.
+      boundedPool.offer(monitor);
+    }
+
+    public void monitor(String cmd, Process process, long timeout) {
+      this.process = process;
+      this.timeout = timeout;
+      this.cmd = cmd;
+      killed = false;
+      executor.execute(this);
+    }
+
+    @Override
+    public void run() {
+      while(true) {
+        if (!isRunning()) return;
+        long s = System.currentTimeMillis();
+        while (System.currentTimeMillis() - s <= timeout) {
+          try { Thread.sleep(500); } catch (InterruptedException ignore) { }
+          if (isRunning()) continue;
+          return; // Process finished.
+        }
+        process.destroy();
+        killed = true;
+        LOG.warn("Command '" + cmd + "' timeout, exceed " + timeout + " milliseconds.");
+      }
+    }
+
+    public boolean isTimeout() {
+      return killed;
+    }
+
+    private boolean isRunning() {
+      try {
+        process.exitValue();
+      } catch (IllegalThreadStateException alreadyRun) {
+        return true;
+      }
+      return false;
+    }
+  }
+
   public enum ExceptionCode {
-    IOERROR(-1), INTERRUPTED(-2), INVALID_OUT(-3);
+    IOERROR(-1), INTERRUPTED(-2), INVALID_OUT(-3), TIMEOUT(-4);
 
     private final int val;
 
