@@ -56,9 +56,9 @@ public class HdfsController {
 
   @ResponseBody
   @RequestMapping(
-    value = "/user/group/add/{u_name}",
+    value = "/user/group/append/{u_name}",
     method = { RequestMethod.GET, RequestMethod.POST })
-  public Msg addGroup(@PathVariable("u_name") String name, @RequestParam("groups") String gs) {
+  public Msg appendGroup(@PathVariable("u_name") String name, @RequestParam("groups") String gs) {
     String[] groups = gs.split(",");
 
     for (String g : groups) {
@@ -73,7 +73,7 @@ public class HdfsController {
     Msg msg = null;
 
     try {
-      hdfsService.addGroup(name, groups);
+      hdfsService.appendGroup(name, groups);
       msg = new SuccessMsg();
     } catch (IOException e) {
       ErrorMsg err = new ErrorMsg();
@@ -102,6 +102,25 @@ public class HdfsController {
     return msg;
   }
 
+  @ResponseBody
+  @RequestMapping(
+    value = "/group/add/{g_name}",
+    method = { RequestMethod.GET, RequestMethod.POST })
+  public Msg addGroup(@PathVariable("g_name") String name) {
+    Msg msg = null;
+
+    try {
+      hdfsService.addGroup(name);
+      msg = new SuccessMsg();
+    } catch (IOException e) {
+      ErrorMsg err = new ErrorMsg();
+      err.setCode(ErrorMsg.ErrCode.IOE.val());
+      err.setErrMsg(e.getMessage());
+      msg = err;
+    }
+
+    return msg;
+  }
 
 }
 

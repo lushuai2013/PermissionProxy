@@ -79,7 +79,7 @@ public class HdfsUserManager {
     return retVal;
   }
 
-  public List<ShellResult> addGroup(String user, String ...groups) {
+  public List<ShellResult> appendGroup(String user, String ...groups) {
     List<ShellResult> retVal = new ArrayList<ShellResult>(namenodeHosts.length);
 
     String Gargs = null;
@@ -89,7 +89,19 @@ public class HdfsUserManager {
     }
 
     for (int i = 0 ; i < namenodeHosts.length; i++) {
-      String cmd = scriptPath + " addGroup " + namenodeHosts[i] + " " + user + " " + Gargs;
+      String cmd = scriptPath + " appendGroup " + namenodeHosts[i] + " " + user + " " + Gargs;
+      retVal.add(ShellUtils.runCommand(cmd).setHost(namenodeHosts[i]));
+    }
+
+    return retVal;
+  }
+
+
+  public List<ShellResult> addGroup(String group) {
+    List<ShellResult> retVal = new ArrayList<ShellResult>(namenodeHosts.length);
+
+    for (int i = 0 ; i < namenodeHosts.length; i++) {
+      String cmd = scriptPath + " addGroup " + namenodeHosts[i] + " " + group;
       retVal.add(ShellUtils.runCommand(cmd).setHost(namenodeHosts[i]));
     }
 

@@ -6,29 +6,6 @@ if [ -z $cmd ]; then
 fi
 shift
 
-#HOSTS=(`echo $1 | awk '{split($0,a,",");for(i in a) print a[i]};'`)
-host=$1
-shift
-
-user=$1
-if [ -z $user ]; then
-  exit 101 # Must have a specific user
-fi
-shift
-
-groups=()
-while [ ! -z $1 ]
-do
-  next=${#groups[*]}
-  groups[$next]=$1
-  shift
-done
-
-if [ $cmd == 'addGroup' ] && [ ${#groups[*]} -eq 0 ]
-then
-  exit 102 # Must have specific groups
-fi
-
 # If enviorment is Mac OS, we enable test mode for development.
 # Mac OS has no command 'useradd' and 'usermod'.
 MODE="RUN"
@@ -36,7 +13,36 @@ if [ $(uname -s) == 'Darwin' ]; then
 	MODE="TEST"
 fi
 
+
+prepare_params(){
+	host=$1
+	shift
+
+	if [ $cmd != 'addGroup' ]; then
+		user=$1
+		if [ -z $user ]; then
+		  exit 101 # Must have a specific user
+		fi
+		shift
+	fi
+
+	groups=()
+	while [ ! -z $1 ]
+	do
+	  next=${#groups[*]}
+	  groups[$next]=$1
+	  shift
+	done
+
+	if [[ $cmd =~ .*Group$ ]] && [ ${#groups[*]} -eq 0 ]
+	then
+	  exit 102 # Must have specific groups
+	fi
+}
+
+
 add_user(){
+  prepare_params $@
   ssh $host sudo useradd $user -M -s /sbin/nologin
 
   if [ $? -ne 0 ]; then
@@ -45,6 +51,16 @@ add_user(){
 }
 
 add_group(){
+	prepare_params $@
+	g=${groups[0]}
+	ssh $host sudo groupadd $g
+	if [ $? -ne 0 ]; then
+		exit 103 #Occur exception
+	fi
+}
+
+append_group(){
+  prepare_params $@
   local Gargs=""
   for g in ${groups[*]}; do
     if [ -z $Gargs ]; then
@@ -61,6 +77,7 @@ add_group(){
 }
 
 find_user(){
+  prepare_params $@
   res=$(ssh $host id $user)
 
   if [ $? -ne 0 ]; then
@@ -77,19 +94,28 @@ find_user(){
   fi
 }
 
-
+# Simulate linux environment
 if [ $MODE == 'TEST' ]; then
   	ILLEGAL_USER='TEST_U_ILLEGAL'
 	ILLEGAL_GROUP="TEST_G_ILLEGAL"
 
 	case $cmd in
 		'addUser')
+		    prepare_params $@
 			if [ $user == $ILLEGAL_USER ]; then
 				echo "useradd: user '$ILLEGAL_USER' already exists" >&2
 				exit 103
 			fi
 		;;
 		'addGroup')
+		    prepare_params $@
+			if [ ${groups[0]} == $ILLEGAL_GROUP ]; then
+				echo "groupadd: group '$ILLEGAL_GROUP' already exists" >&2
+				exit 103
+			fi
+		;;
+		'appendGroup')
+		    prepare_params $@
 			if [ $user == $ILLEGAL_USER ]; then
 				echo "usermod: user '$ILLEGAL_USER' does not exist" >&2
 				exit 103
@@ -99,10 +125,10 @@ if [ $MODE == 'TEST' ]; then
 					echo "usermod: group '$ILLEGAL_GROUP' does not exist" >&2
 					exit 103
 				fi
-			done	
+			done
 		;;
 		'findUser')
-			find_user
+			find_user $@
 		;;
 		*)
   			echo "Unsupported command '"$cmd"'"
@@ -114,13 +140,16 @@ fi
 
 case $cmd in
   'addUser')
-	add_user
+	add_user $@
   ;;
   'addGroup')
-	add_group
+	add_group $@
+  ;;
+  'appendGroup')
+	append_group $@
   ;;
   'findUser')
-	find_user
+	find_user $@
   ;;
   *)
   	echo "Unsupported command '"$cmd"'"
