@@ -36,7 +36,9 @@ public class HdfsController {
   }
 
   @ResponseBody
-  @RequestMapping("/user/info/{u_name}")
+  @RequestMapping(
+    value = "/user/info/{u_name}",
+    method = { RequestMethod.GET, RequestMethod.POST })
   public Msg findUser(@PathVariable("u_name") String name) {
     Msg msg = null;
     try {
@@ -86,7 +88,9 @@ public class HdfsController {
   }
 
   @ResponseBody
-  @RequestMapping("/user/add/{u_name}")
+  @RequestMapping(
+    value = "/user/add/{u_name}",
+    method = { RequestMethod.GET, RequestMethod.POST })
   public Msg addUser(@PathVariable("u_name") String name) {
     Msg msg = null;
     try {
