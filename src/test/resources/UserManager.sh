@@ -18,7 +18,7 @@ prepare_params(){
 	host=$1
 	shift
 
-	if [ $cmd != 'addGroup' ]; then
+	if [ $cmd != 'addGroup' ] && [ $cmd != 'delGroup' ]; then
 		user=$1
 		if [ -z $user ]; then
 		  exit 101 # Must have a specific user
@@ -94,6 +94,25 @@ find_user(){
   fi
 }
 
+delete_user(){
+  prepare_params $@
+  ssh $host sudo userdel -f $user
+  
+  if [ $? -ne 0 ]; then
+    exit 103 # Occur exception
+  fi
+}
+
+delete_group(){
+  prepare_params $@
+  g=${groups[0]}
+  ssh $host sudo groupdel $g
+  
+  if [ $? -ne 0 ]; then
+    exit 103 # Occur exception
+  fi
+}
+
 # Simulate linux environment
 if [ $MODE == 'TEST' ]; then
   	ILLEGAL_USER='TEST_U_ILLEGAL'
@@ -107,10 +126,24 @@ if [ $MODE == 'TEST' ]; then
 				exit 103
 			fi
 		;;
+		'delUser')
+		    prepare_params $@
+			if [ $user == $ILLEGAL_USER ]; then
+				echo "userdel: user '$ILLEGAL_USER' doesn't exist" >&2
+				exit 103
+			fi
+		;;
 		'addGroup')
 		    prepare_params $@
 			if [ ${groups[0]} == $ILLEGAL_GROUP ]; then
 				echo "groupadd: group '$ILLEGAL_GROUP' already exists" >&2
+				exit 103
+			fi
+		;;
+		'delGroup')
+		    prepare_params $@
+			if [ ${groups[0]} == $ILLEGAL_GROUP ]; then
+				echo "groupdel: group '$ILLEGAL_GROUP' doesn't exist" >&2
 				exit 103
 			fi
 		;;
@@ -142,8 +175,14 @@ case $cmd in
   'addUser')
 	add_user $@
   ;;
+  'delUser')
+	delete_user $@
+  ;;
   'addGroup')
 	add_group $@
+  ;;
+  'delGroup')
+	delete_group $@
   ;;
   'appendGroup')
 	append_group $@
