@@ -69,10 +69,14 @@ append_group(){
       Gargs=$Gargs','$g
     fi  
   done
-  ssh $host sudo usermod -a -G $Gargs $user
-
-  if [ $? -ne 0 ]; then
-    exit 103 # Occur exception
+  if [ ! -z $Gargs ]; then
+  	ssh $host sudo usermod -a -G $Gargs $user
+  	if [ $? -ne 0 ]; then
+    	exit 103 # Occur exception
+  	fi
+  else
+	echo "Empty group to append" >&2
+	exit 104
   fi
 }
 
@@ -111,6 +115,44 @@ delete_group(){
   if [ $? -ne 0 ]; then
     exit 103 # Occur exception
   fi
+}
+
+delete_group_from_user(){
+	res=$(find_user $@)
+  	prepare_params $@
+
+	code=$?
+	if [ $code -ne 0 ]; then
+		exit $code
+	fi
+
+	nowGroups=($(echo $res | awk \
+			'{if($0 ~ /^\$<.*>\$$/){ \
+				s=index($0,"$<"); \
+				e=index($0,">$"); \
+				print substr($0,s+2,e-s-2) \
+		 	 }}'))
+	delGroups=${groups[*]}
+
+	# Add major group to avoid passing empty param to 'usermod -G'.
+	# 'usermod -G' can't remove major group even if it is not in your passing param.
+	newGroups=${nowGroups[0]}
+	nowGroups=${nowGroups[*]:1}
+	for i in ${nowGroups[*]}; do
+		local needDel=false
+		for j in ${delGroups[*]}; do
+			if [ $i == $j ]; then
+				needDel=true
+				break;
+			fi
+		done
+		if $needDel ; then continue; fi
+		newGroups=$newGroups","$i
+	done
+	ssh $host sudo usermod -G $newGroups $user
+	if [ $? -ne 0 ]; then
+		exit 103 # Occur exception
+	fi
 }
 
 # Simulate linux environment
@@ -160,6 +202,15 @@ if [ $MODE == 'TEST' ]; then
 				fi
 			done
 		;;
+	  	'delUserGroup')
+			find_user $@
+			for g in ${groups[*]}; do
+				if [ $g == $ILLEGAL_GROUP ]; then
+					echo "usermod: group '$ILLEGAL_GROUP' does not exist" >&2
+					exit 103
+				fi
+			done
+	  	;;
 		'findUser')
 			find_user $@
 		;;
@@ -186,6 +237,9 @@ case $cmd in
   ;;
   'appendGroup')
 	append_group $@
+  ;;
+  'delUserGroup')
+	delete_group_from_user $@
   ;;
   'findUser')
 	find_user $@
