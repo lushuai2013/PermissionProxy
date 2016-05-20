@@ -108,6 +108,25 @@ public class HdfsController {
 
   @ResponseBody
   @RequestMapping(
+    value = "/user/delete/{u_name}",
+    method = { RequestMethod.GET, RequestMethod.POST })
+  public Msg delUser(@PathVariable("u_name") String name) {
+    Msg msg = null;
+    try {
+      hdfsService.delUser(name);
+      msg = new SuccessMsg();
+    } catch (IOException e) {
+      ErrorMsg err = new ErrorMsg();
+      err.setCode(ErrorMsg.ErrCode.IOE.val());
+      err.setErrMsg(e.getMessage());
+      msg = err;
+    }
+
+    return msg;
+  }
+
+  @ResponseBody
+  @RequestMapping(
     value = "/group/add/{g_name}",
     method = { RequestMethod.GET, RequestMethod.POST })
   public Msg addGroup(@PathVariable("g_name") String name) {
@@ -126,5 +145,24 @@ public class HdfsController {
     return msg;
   }
 
+  @ResponseBody
+  @RequestMapping(
+    value = "/group/delete/{g_name}",
+    method = { RequestMethod.GET, RequestMethod.POST })
+  public Msg delGroup(@PathVariable("g_name") String name) {
+    Msg msg = null;
+
+    try {
+      hdfsService.delGroup(name);
+      msg = new SuccessMsg();
+    } catch (IOException e) {
+      ErrorMsg err = new ErrorMsg();
+      err.setCode(ErrorMsg.ErrCode.IOE.val());
+      err.setErrMsg(e.getMessage());
+      msg = err;
+    }
+
+    return msg;
+  }
 }
 

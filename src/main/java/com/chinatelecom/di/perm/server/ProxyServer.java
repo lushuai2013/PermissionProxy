@@ -139,7 +139,38 @@ public class ProxyServer extends Thread implements Service, HdfsProxyService {
     return success;
   }
 
+  @Override
+  public boolean delGroup(String group) throws IOException {
+    List<ShellResult> shellRess = hdfsUserMgr.delGroup(group);
+    boolean success = true;
+    // TODO
+    // We need to deal with inconsistent results
+    for (ShellResult res : shellRess) {
+      if (res.getExitCode() != ShellResult.SUCCESS_CODE) {
+        throw new IOException("An exceptional exit code, ShellResult=" + res);
+      }
+      success &= (res.getExitCode() == 0);
+    }
 
+    return success;
+  }
+
+
+  @Override
+  public boolean delUser(String user) throws IOException {
+    List<ShellResult> shellRess = hdfsUserMgr.delUser(user);
+    boolean success = true;
+    // TODO
+    // We need to deal with inconsistent results
+    for (ShellResult res : shellRess) {
+      if (res.getExitCode() != ShellResult.SUCCESS_CODE) {
+        throw new IOException("An exceptional exit code, ShellResult=" + res);
+      }
+      success &= (res.getExitCode() == 0);
+    }
+
+    return success;
+  }
 
   @Override
   public boolean addUser(String user) throws IOException {
@@ -183,7 +214,6 @@ public class ProxyServer extends Thread implements Service, HdfsProxyService {
     }
 
   }
-
 
 }
 

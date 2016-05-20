@@ -133,6 +133,28 @@ public class HdfsUserManager {
     return retVal;
   }
 
+  public List<ShellResult> delGroup(String group) {
+    List<ShellResult> retVal = new ArrayList<ShellResult>(namenodeHosts.length);
+
+    for (int i = 0 ; i < namenodeHosts.length; i++) {
+      String cmd = scriptPath + " delGroup " + namenodeHosts[i] + " " + group;
+      retVal.add(ShellUtils.runCommand(cmd).setHost(namenodeHosts[i]));
+    }
+
+    return retVal;
+  }
+
+  public List<ShellResult> delUser(String user) {
+    List<ShellResult> retVal = new ArrayList<ShellResult>(namenodeHosts.length);
+
+    for (int i = 0 ; i < namenodeHosts.length; i++) {
+      String cmd = scriptPath + " delUser " + namenodeHosts[i] + " " + user;
+      retVal.add(ShellUtils.runCommand(cmd).setHost(namenodeHosts[i]));
+    }
+
+    return retVal;
+  }
+
   private boolean extractValidStdout(ShellResult res) {
     if (res.getStdOut() == null) {
       LOG.debug("Want to extract stdout but null, ShellResult=" + res);
