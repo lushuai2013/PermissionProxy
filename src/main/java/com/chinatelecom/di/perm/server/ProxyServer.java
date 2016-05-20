@@ -105,7 +105,6 @@ public class ProxyServer extends Thread implements Service, HdfsProxyService {
     return null;
   }
 
-
   @Override
   public boolean appendGroup(String user, String... groups) throws IOException {
     List<ShellResult> shellRess = hdfsUserMgr.appendGroup(user, groups);
@@ -122,6 +121,21 @@ public class ProxyServer extends Thread implements Service, HdfsProxyService {
     return success;
   }
 
+  @Override
+  public boolean delUserGroup(String user, String... groups) throws IOException {
+    List<ShellResult> shellRess = hdfsUserMgr.delUserGroup(user, groups);
+    boolean success = true;
+    // TODO
+    // We need to deal with inconsistent results
+    for (ShellResult res : shellRess) {
+      if (res.getExitCode() != ShellResult.SUCCESS_CODE) {
+        throw new IOException("An exceptional exit code, ShellResult=" + res);
+      }
+      success &= (res.getExitCode() == 0);
+    }
+
+    return success;
+  }
 
   @Override
   public boolean addGroup(String group) throws IOException {

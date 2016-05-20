@@ -96,6 +96,22 @@ public class HdfsUserManager {
     return retVal;
   }
 
+  public List<ShellResult> delUserGroup(String user, String ...groups) {
+    List<ShellResult> retVal = new ArrayList<ShellResult>(namenodeHosts.length);
+
+    String Gargs = null;
+    for (String g : groups) {
+      if (Gargs == null) Gargs = g;
+      else Gargs += "," + g;
+    }
+
+    for (int i = 0 ; i < namenodeHosts.length; i++) {
+      String cmd = scriptPath + " delUserGroup " + namenodeHosts[i] + " " + user + " " + Gargs;
+      retVal.add(ShellUtils.runCommand(cmd).setHost(namenodeHosts[i]));
+    }
+
+    return retVal;
+  }
 
   public List<ShellResult> addGroup(String group) {
     List<ShellResult> retVal = new ArrayList<ShellResult>(namenodeHosts.length);

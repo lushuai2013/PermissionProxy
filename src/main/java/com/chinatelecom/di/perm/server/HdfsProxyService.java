@@ -10,4 +10,5 @@ public interface HdfsProxyService {
   boolean addUser(String user) throws IOException;
   boolean delUser(String user) throws IOException;
   boolean appendGroup(String user, String ...groups) throws IOException;
+  boolean delUserGroup(String user, String ...groups) throws IOException;
 }

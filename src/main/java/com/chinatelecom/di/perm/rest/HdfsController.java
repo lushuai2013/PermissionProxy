@@ -89,6 +89,37 @@ public class HdfsController {
 
   @ResponseBody
   @RequestMapping(
+    value = "/user/group/delete/{u_name}",
+    method = { RequestMethod.GET, RequestMethod.POST })
+  public Msg delUserGroup(@PathVariable("u_name") String name, @RequestParam("groups") String gs) {
+    String[] groups = gs.split(",");
+
+    for (String g : groups) {
+      if (g.length() == 0) {
+        ErrorMsg err = new ErrorMsg();
+        err.setCode(ErrorMsg.ErrCode.INVALID_PARAM.val());
+        err.setErrMsg("Group can't be empty");
+        return err;
+      }
+    }
+
+    Msg msg = null;
+
+    try {
+      hdfsService.delUserGroup(name, groups);
+      msg = new SuccessMsg();
+    } catch (IOException e) {
+      ErrorMsg err = new ErrorMsg();
+      err.setCode(ErrorMsg.ErrCode.IOE.val());
+      err.setErrMsg(e.getMessage());
+      msg = err;
+    }
+
+    return msg;
+  }
+
+  @ResponseBody
+  @RequestMapping(
     value = "/user/add/{u_name}",
     method = { RequestMethod.GET, RequestMethod.POST })
   public Msg addUser(@PathVariable("u_name") String name) {
