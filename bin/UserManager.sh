@@ -88,7 +88,7 @@ find_user(){
     exit 103 # Occur exception
   fi
 
-  groups=(`echo $res | grep -o 'groups.*$' | grep -oE '\([\.a-zA-Z1-9_]+\)' | grep -oE '[\.a-zA-Z0-9_]+'`)
+  groups=(`echo $res | grep -o 'groups.*$' | grep -oE '\((\w+\.*)+\)' | grep -oE '(\w+\.*)+'`)
 	
   # '$</>' is a mark to protect valid output.
   echo -n '$<'${groups[*]}'>$'
